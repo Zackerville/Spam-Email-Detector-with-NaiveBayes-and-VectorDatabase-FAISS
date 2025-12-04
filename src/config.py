@@ -1,4 +1,4 @@
-DATASET_PATH = 'data\2cls_spam_text_cls.csv'
+DATASET_PATH = 'data/2cls_spam_text_cls.csv'
 SEED = 42
 
 RANDOM_STATE = 42
