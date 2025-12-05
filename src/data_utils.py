@@ -5,15 +5,15 @@ from .config import *
 
 def load_data():
     df = pd.read_csv(DATASET_PATH)
-    df = df.dropna(subset=['Message', 'Category'])
+    df = df.dropna(subset=['text', 'label'])
     df = df.reset_index(drop=True)
     return df
 
 
 def load_messages_labels():
     df = load_data()
-    messages = df['Message'].astype('str').tolist()
-    labels = df['Category'].tolist()
+    messages = df['text'].astype('str').tolist()
+    labels = df['label'].tolist()
     encoder = LabelEncoder()
     label_encoded = encoder.fit_transform(labels)
     return messages, label_encoded

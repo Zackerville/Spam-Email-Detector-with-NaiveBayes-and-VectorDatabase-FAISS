@@ -4,6 +4,10 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 import numpy as np
+from tqdm import tqdm
+import torch
+import torch.nn.functional as F
+import re
 
 stopwords = set(stopwords.words('english'))
 stemmer = PorterStemmer()
@@ -60,4 +64,37 @@ def compute_tfidf(message, vocab, idf):
         x[i] = tf * idf
     
     return x
+
+
+def preprocess_for_embedding(text):
+    if not isinstance(text, str):
+        text = str(text)
+    text = text.strip()
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
+def average_pool(last_hidden_states, attention_mask):
+  last_hidden = last_hidden_states.masked_fill(~attention_mask[..., None].bool(), 0.0)
+  return last_hidden.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
+
+
+def get_embeddings(texts, model, tokenizer, device, batch_size=20):
+  embeddings = []
+  for i in tqdm(range(0, len(texts), batch_size), desc='Generating embeddings'):
+    batch_texts = texts[i:i+batch_size]
+    batch_texts = [preprocess_for_embedding(t) for t in batch_texts]
+    batch_texts_with_prefix = [f'Passage: {text}' for text in batch_texts]
+
+    batch_dict = tokenizer(batch_texts_with_prefix, max_length=512, padding=True, truncation=True, return_tensors='pt')
+    batch_dict = {k: v.to(device) for k, v in batch_dict.items()}
+
+    with torch.no_grad():
+      outputs = model(**batch_dict)
+      batch_embeddings = average_pool(outputs.last_hidden_state, batch_dict['attention_mask'])
+      batch_embeddings = F.normalize(batch_embeddings, p=2, dim=1)
+      embeddings.append(batch_embeddings.cpu().numpy())
+
+  return np.vstack(embeddings)
+
     
