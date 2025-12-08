@@ -1,6 +1,7 @@
 import argparse
 from src.nb_pipeline import *
 from src.vector_db_knn_pipeline import *
+from src.kmeans_pipeline import *
 
 def run_naive_bayes():
     model, vocab, idf, metrics = train_nbclassifier()
@@ -37,13 +38,10 @@ def run_faiss_knn():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["nb", "faiss", "both"], default="nb")
+    parser.add_argument("--mode", choices=["nb", "faiss", "kmeans"], default="nb")
     args = parser.parse_args()
 
     if args.mode == "nb":
         run_naive_bayes()
     elif args.mode == "faiss":
-        run_faiss_knn()
-    else:
-        run_naive_bayes()
         run_faiss_knn()
